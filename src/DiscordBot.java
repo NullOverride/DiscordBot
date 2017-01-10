@@ -184,7 +184,7 @@ public class DiscordBot extends ListenerAdapter
 		}
 		else if (msg.equals("!help"))
 		{
-			channel.sendMessage("!ping, !roll, !coinflip, !calc [expression], !weather [city], !yt [keyword]");
+			channel.sendMessage("!ping, !roll, !coinflip, !calc [expression], !weather [city], !yt [keyword]").queue();
 		}
 		else if (msg.equals("!roll"))
 		{
