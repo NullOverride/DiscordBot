@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.beans.XMLEncoder;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -24,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -47,6 +52,7 @@ import net.dv8tion.jda.client.entities.Group;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.ChannelType;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
@@ -289,15 +295,80 @@ public class DiscordBot extends ListenerAdapter
 					List<Channel> channel2 = service.getForecastForLocation(msg.substring(msg.indexOf(" ")), DegreeUnit.FAHRENHEIT).first(1);
 					Channel channel3 = channel2.get(0);
 					//System.out.println(channel3.getItem().getTitle());
-					String forecast = "";
+					//String forecast = "";
+					BufferedImage result = new BufferedImage(1190, 267, BufferedImage.TYPE_INT_RGB);
+					Graphics g = result.getGraphics();
+					int currentX = 0;
+					int currentY = 0;
 					for(Forecast f : channel3.getItem().getForecasts())
 					{
 						//System.out.println(f.getDate().toString().toUpperCase());
 						//System.out.println("    LOW: " + f.getLow() + "C  HIGH: " + f.getHigh() + "C WEATHER: " + f.getText());
-						forecast += f.getDate().toString().toUpperCase() + "\n" 
-						+ "\t\t\tLOW: " + f.getLow() + "F  HIGH: " + f.getHigh() + "F WEATHER: " + f.getText() + "\n";
+						//forecast += f.getDate().toString().toUpperCase() + "\n" 
+						//+ "\t\t\tLOW: " + f.getLow() + "F  HIGH: " + f.getHigh() + "F WEATHER: " + f.getText() + "\n";
+						
+						BufferedImage weather;
+						String weatherForecast = f.getText();
+
+						if(weatherForecast.contains("Clear") || weatherForecast.contains("Sunny")) weather = ImageIO.read(new File("./images/weather/sunny.png"));
+						else if(weatherForecast.equals("Partly Cloudy")) weather = ImageIO.read(new File("./images/weather/partcloudy.png"));
+						else if(weatherForecast.equals("Mostly Cloudy") || weatherForecast.contains("Cloudy")) weather = ImageIO.read(new File("./images/weather/mostlycloudy.png"));
+						else if(weatherForecast.contains("Showers") || weatherForecast.contains("Rain")) weather = ImageIO.read(new File("./images/weather/showers.png"));
+						else if(weatherForecast.contains("Thunderstorms")) weather = ImageIO.read(new File("./images/weather/thunderstorms.png"));
+						else weather = ImageIO.read(new File("./images/weather/unknown.png"));
+						
+						g.drawImage(weather, currentX, currentY, null);
+						
+						BufferedImage day;
+						switch(f.getDay().toString().toLowerCase())
+						{
+							case "mon":
+								day = ImageIO.read(new File("./images/weather/Monday.png"));
+								break;
+							case "tue":
+								day = ImageIO.read(new File("./images/weather/Tuesday.png"));
+								break;
+							case "wed":
+								day = ImageIO.read(new File("./images/weather/Wednesday.png"));
+								break;
+							case "thu":
+								day = ImageIO.read(new File("./images/weather/Thursday.png"));
+								break;
+							case "fri":
+								day = ImageIO.read(new File("./images/weather/Friday.png"));
+								break;
+							case "sat":
+								day = ImageIO.read(new File("./images/weather/Saturday.png"));
+								break;
+							case "sun":
+								day = ImageIO.read(new File("./images/weather/Sunday.png"));
+								break;
+							default:
+								day = ImageIO.read(new File("./images/weather/unknown2.png"));
+								break;
+						}
+
+						g.setColor(Color.BLACK);
+						g.setFont(new Font("Times New Roman", Font.BOLD, 20));
+						g.drawImage(day, currentX, currentY + 147, null);
+						g.drawImage(ImageIO.read(new File("./images/weather/High.png")), currentX, currentY + 147 + 30, null);
+						g.drawString(f.getHigh() + "F", currentX + 69, (currentY + 147 + 30) + 23);
+						g.drawImage(ImageIO.read(new File("./images/weather/Low.png")), currentX, currentY + 147 + 30 * 2, null);
+						g.drawString(f.getLow() + "F", currentX + 69, (currentY + 147 + 30 + 30) + 23);
+						g.drawImage(ImageIO.read(new File("./images/weather/blank.png")), currentX, currentY + 147 + 30 * 3, null);
+
+						g.setFont(new Font("Times New Roman", Font.BOLD, 14));
+						g.drawString(f.getText(), currentX, (currentY + 147 + 30 * 3) + 7);
+					
+						currentX += 119;
 					}
-					channel.sendMessage(channel3.getItem().getTitle() + "\n" + forecast).queue();
+
+					g.drawString(channel3.getTitle(), 0, (currentY + 147 + 30 * 3) + 27);
+					ImageIO.write(result, "png", new File("result.png"));
+					g.dispose();
+					//channel.sendMessage(channel3.getItem().getTitle() + "\n" + forecast).queue();
+					
+					channel.sendFile(new File("result.png"), "weather.png", null).queue();
 				} catch (JAXBException | IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
